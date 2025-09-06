@@ -30,7 +30,6 @@
         <package android:name="org.fossify.contacts.debug" />
         <package android:name="org.fossify.contacts" />
 
-        <!-- Required for loading contact accounts -->
         <intent>
             <action android:name="android.accounts.AccountAuthenticator" />
         </intent>
@@ -118,7 +117,15 @@
             android:label="@string/ongoing_call"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:showOnLockScreen="true" />
+            android:showOnLockScreen="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.telecom.action.DEFAULT_DIALER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".activities.DialpadActivity"
@@ -131,23 +138,19 @@
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:scheme="tel" />
             </intent-filter>
 
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.DIAL" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data android:scheme="tel" />
             </intent-filter>
         </activity>
@@ -162,7 +165,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.CALL" />
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:scheme="tel" />
             </intent-filter>
         </activity>
@@ -457,6 +459,8 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.telecom.action.DEFAULT_DIALER" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
     </application>
