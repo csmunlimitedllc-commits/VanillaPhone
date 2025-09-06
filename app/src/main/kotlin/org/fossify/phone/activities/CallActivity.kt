@@ -7,10 +7,12 @@ import android.content.Intent
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.RippleDrawable
 import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.provider.ContactsContract
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.view.KeyEvent
@@ -20,6 +22,7 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
+import androidx.annotation.RequiresApi
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.postDelayed
 import androidx.core.view.children
@@ -39,6 +42,8 @@ import org.fossify.phone.models.AudioRoute
 import org.fossify.phone.models.CallContact
 import kotlin.math.max
 import kotlin.math.min
+import android.net.Uri
+import android.provider.ContactsContract.CommonDataKinds
 
 class CallActivity : SimpleActivity() {
     companion object {
@@ -477,7 +482,6 @@ class CallActivity : SimpleActivity() {
                 } else {
                     getString(if (isSpeakerOn) R.string.turn_speaker_off else R.string.turn_speaker_on)
                 }
-                // show speaker icon when a headset is connected, a headset icon maybe confusing to some
                 if (route == AudioRoute.WIRED_HEADSET) {
                     setImageResource(R.drawable.ic_volume_down_vector)
                 } else {
@@ -602,8 +606,33 @@ class CallActivity : SimpleActivity() {
                             .into(this)
                     }
                 }
+
+                setOnClickListener {
+                    val contactId = getContactId(CallManager.getPrimaryCall())
+                    val phoneNumber = CallManager.getPrimaryCall()?.details?.handle?.schemeSpecificPart
+
+                    val intent: Intent? = if (contactId != null) {
+                        val contactUri = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_URI, contactId.toString())
+                        Intent(Intent.ACTION_VIEW, contactUri)
+                    } else if (!phoneNumber.isNullOrEmpty()) {
+                        Intent(Intent.ACTION_INSERT).apply {
+                            putExtra(ContactsContract.Intents.Insert.PHONE, phoneNumber)
+                        }
+                    } else {
+                        null
+                    }
+
+                    if (intent != null) {
+                        try {
+                            startActivity(intent)
+                        } catch (e: Exception) {
+                            toast(R.string.no_contacts_app)
+                        }
+                    }
+                }
             }
         }
+        displayContactInfo()
     }
 
     private fun getContactNameOrNumber(contact: CallContact): String {
@@ -824,7 +853,7 @@ class CallActivity : SimpleActivity() {
         }
     }
 
-    @SuppressLint("NewApi")
+    @RequiresApi(Build.VERSION_CODES.O_MR1)
     private fun addLockScreenFlags() {
         if (isOreoMr1Plus()) {
             setShowWhenLocked(true)
@@ -903,5 +932,144 @@ class CallActivity : SimpleActivity() {
     private fun clearInput(): Boolean {
         binding.dialpadInput.setText("");
         return true;
+    }
+
+    private fun displayContactInfo() {
+        val call = CallManager.getPrimaryCall()
+        val contactId = getContactId(call)
+        if (contactId != null) {
+            val notes = getContactNotes(contactId)
+            val title = getContactTitle(contactId)
+            val company = getContactCompany(contactId)
+            val birthdate = getContactBirthdate(contactId)
+
+            binding.apply {
+                notesText.text = notes
+                notesText.beVisibleIf(!notes.isNullOrEmpty())
+
+                titleText.text = title
+                titleText.beVisibleIf(!title.isNullOrEmpty())
+
+                companyText.text = company
+                companyText.beVisibleIf(!company.isNullOrEmpty())
+
+                // Recommended Change: Add "Birthday: " prefix if a birthdate is found
+                if (!birthdate.isNullOrEmpty()) {
+                    birthdateText.text = "Birthday: $birthdate"
+                } else {
+                    birthdateText.text = ""
+                }
+
+                birthdateText.beVisibleIf(!birthdate.isNullOrEmpty())
+            }
+        } else {
+            binding.apply {
+                notesText.beGone()
+                titleText.beGone()
+                companyText.beGone()
+                birthdateText.beGone()
+            }
+        }
+    }
+
+    private fun getContactId(call: Call?): Long? {
+        val handle = call?.details?.handle?.schemeSpecificPart ?: return null
+        val normalizedHandle = handle.replace(Regex("[^\\d]"), "")
+
+        val uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(normalizedHandle))
+        val projection = arrayOf(ContactsContract.PhoneLookup._ID)
+        val cursor = contentResolver.query(uri, projection, null, null, null)
+
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val contactIdIndex = it.getColumnIndex(ContactsContract.PhoneLookup._ID)
+                if (contactIdIndex != -1) {
+                    return it.getLong(contactIdIndex)
+                }
+            }
+        }
+        return null
+    }
+
+    private fun getContactNotes(contactId: Long): String? {
+        val uri = ContactsContract.Data.CONTENT_URI
+        val selection = "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?"
+        val selectionArgs = arrayOf(contactId.toString(), CommonDataKinds.Note.CONTENT_ITEM_TYPE)
+
+        contentResolver.query(uri, null, selection, selectionArgs, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val noteColumnIndex = cursor.getColumnIndex(CommonDataKinds.Note.NOTE)
+                if (noteColumnIndex != -1) {
+                    return cursor.getString(noteColumnIndex)
+                }
+            }
+        }
+        return null
+    }
+
+    private fun getContactTitle(contactId: Long): String? {
+        val uri = ContactsContract.Data.CONTENT_URI
+        val selection = "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?"
+        val selectionArgs = arrayOf(contactId.toString(), CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
+
+        contentResolver.query(uri, null, selection, selectionArgs, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val titleColumnIndex = cursor.getColumnIndex(CommonDataKinds.Organization.TITLE)
+                if (titleColumnIndex != -1) {
+                    return cursor.getString(titleColumnIndex)
+                }
+            }
+        }
+        return null
+    }
+
+    private fun getContactCompany(contactId: Long): String? {
+        val uri = ContactsContract.Data.CONTENT_URI
+        val selection = "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?"
+        val selectionArgs = arrayOf(contactId.toString(), CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
+
+        contentResolver.query(uri, null, selection, selectionArgs, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val companyColumnIndex = cursor.getColumnIndex(CommonDataKinds.Organization.COMPANY)
+                if (companyColumnIndex != -1) {
+                    return cursor.getString(companyColumnIndex)
+                }
+            }
+        }
+        return null
+    }
+
+    private fun getContactBirthdate(contactId: Long): String? {
+        val uri = ContactsContract.Data.CONTENT_URI
+        val selection = "${ContactsContract.Data.CONTACT_ID} = ? AND ${ContactsContract.Data.MIMETYPE} = ?"
+        val selectionArgs = arrayOf(contactId.toString(), ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)
+
+        contentResolver.query(uri, null, selection, selectionArgs, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val typeColumnIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.TYPE)
+                val startDateColumnIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE)
+                if (typeColumnIndex != -1 && startDateColumnIndex != -1) {
+                    val type = cursor.getInt(typeColumnIndex)
+                    if (type == ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY) {
+                        val dateString = cursor.getString(startDateColumnIndex)
+
+                        // Method 3: Conditional check and formatting
+                        return if (dateString?.startsWith("--") == true) {
+                            // The format is --MM-DD
+                            dateString.substring(2) // removes the first two hyphens
+                        } else {
+                            // The format is YYYY-MM-DD
+                            val parts = dateString?.split("-")
+                            if (parts?.size == 3) {
+                                "${parts[1]}-${parts[2]}" // returns MM-DD
+                            } else {
+                                dateString // fallback for unexpected formats
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null
     }
 }

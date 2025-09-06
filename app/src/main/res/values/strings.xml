@@ -6,6 +6,9 @@
 
     <!-- Contacts -->
     <string name="could_not_access_contacts">Could not access your contacts</string>
+    <string name="no_contacts_app">No contacts app found to edit the contact.</string>
+    <string name="contact_not_found">Contact not found or invalid.</string>
+    <string name="complete_action_using">Complete action using</string>
 
     <!-- Recents -->
     <string name="no_previous_calls">No previous calls have been found</string>

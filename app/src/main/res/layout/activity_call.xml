@@ -56,22 +56,78 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <ImageView
-        android:id="@+id/caller_avatar"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/profile_info_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/activity_margin"
-        android:contentDescription="@null"
-        app:layout_constraintBottom_toTopOf="@id/caller_name_label"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_max="@dimen/caller_avatar_max_size"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/on_hold_status_holder"
-        app:layout_constraintVertical_chainStyle="packed"
-        tools:background="@drawable/circle_background"
-        tools:padding="16dp"
-        tools:src="@drawable/ic_person_vector" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:paddingStart="@dimen/activity_margin"
+        android:paddingEnd="@dimen/activity_margin">
+
+        <ImageView
+            android:id="@+id/caller_avatar"
+            android:layout_width="@dimen/caller_avatar_max_size"
+            android:layout_height="@dimen/caller_avatar_max_size"
+            android:contentDescription="@null"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:background="@drawable/circle_background"
+            tools:padding="16dp"
+            tools:src="@drawable/ic_person_vector" />
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/medium_margin"
+            android:gravity="start"
+            android:text="Title will appear here"
+            android:textColor="@android:color/black"
+            android:textSize="17sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/caller_avatar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintBottom_toTopOf="@id/companyText"/>
+
+        <TextView
+            android:id="@+id/companyText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            android:layout_marginStart="@dimen/medium_margin"
+            android:gravity="start"
+            android:text="Company will appear here"
+            android:textColor="@android:color/black"
+            android:textSize="17sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/titleText"
+            app:layout_constraintStart_toEndOf="@id/caller_avatar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/birthdateText"/>
+
+        <TextView
+            android:id="@+id/birthdateText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            android:layout_marginStart="@dimen/medium_margin"
+            android:gravity="start"
+            android:text="Birthdate will appear here"
+            android:textColor="@android:color/holo_red_dark"
+            android:textSize="17sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/companyText"
+            app:layout_constraintStart_toEndOf="@id/caller_avatar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <org.fossify.commons.views.MyTextView
         android:id="@+id/caller_name_label"
@@ -83,12 +139,29 @@
         android:paddingStart="@dimen/medium_margin"
         android:paddingEnd="@dimen/medium_margin"
         android:textSize="@dimen/caller_name_text_size"
+        app:layout_constraintBottom_toTopOf="@id/notesText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/profile_info_container"
+        android:textDirection="firstStrongLtr"
+        tools:text="Caller name" />
+
+    <TextView
+        android:id="@+id/notesText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:gravity="center_horizontal"
+        android:text="Notes will appear here"
+        android:textColor="@android:color/black"
+        android:textSize="15sp"
+        android:textAlignment="viewStart"
+        android:layout_marginStart="16dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/caller_number"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/caller_avatar"
-        android:textDirection="firstStrongLtr"
-        tools:text="Caller name" />
+        app:layout_constraintTop_toBottomOf="@id/caller_name_label" />
 
     <org.fossify.commons.views.MyTextView
         android:id="@+id/caller_number"
@@ -100,7 +173,7 @@
         app:layout_constraintBottom_toTopOf="@id/call_status_label"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/caller_name_label"
+        app:layout_constraintTop_toBottomOf="@+id/notesText"
         android:textDirection="firstStrongLtr"
         tools:text="+1 (123) 456-7890" />
 
